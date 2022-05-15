@@ -1,0 +1,110 @@
+version: '3'
+
+services:
+  traefik:
+    container_name: diribitio-traefik
+    image: "traefik:v2.7"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.acme.address=:82"
+      - "--entrypoints.frontend.address=:80"
+      - "--entrypoints.frontend.http.redirections.entrypoint.to=frontend-secure"
+      - "--entrypoints.frontend.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.frontend-secure.address=:443"
+      - "--entrypoints.database.address=:3306"
+      - "--entrypoints.cache.address=:6379"
+      # Enable ACME (Let's Encrypt): automatic SSL.
+      - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=${EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=vultr"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.delaybeforecheck=120"
+    environment:
+      - "VULTR_API_KEY=${VULTR_API_KEY}"
+      - "VULTR_HTTP_TIMEOUT=${VULTR_HTTP_TIMEOUT}"
+      - "VULTR_PROPAGATION_TIMEOUT=${3600}"
+    networks:
+      - diribitio
+    ports:
+      - "82:82"
+      - "80:80"
+      - "443:443"
+      - "3306:3306"
+      - "6379:6379"
+      # (Optional) Expose Dashboard
+      # - "8080:8080"  # Don't do this in production!
+    volumes:
+      - "diribitio-traefik:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  database:
+    container_name: diribitio-database
+    image: mysql:5.7
+    command: mysqld --sql_mode="" --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    networks:
+      - diribitio
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.database.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.database.entrypoints=database"
+    volumes:
+      - diribitio-database:/var/lib/mysql
+  cache:
+    image: redis:6.2-alpine
+    container_name: diribitio-cache
+    command: redis-server --appendonly yes --requirepass "${REDIS_ROOT_PASSWORD}"
+    volumes:
+      - diribitio-cache:/data
+    networks:
+      - diribitio
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.cache.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.cache.entrypoints=cache"
+  backend:
+    container_name: diribitio-inpriparo
+    build:
+      context: ./backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=HostRegexp(`${HOST_DOMAIN}`, `{subdomain:[a-z]+}.${HOST_DOMAIN}`) && PathPrefix(`/api/`)"
+      - "traefik.http.routers.backend.entrypoints=frontend-secure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.routers.backend.tls.domains[0].main=${HOST_DOMAIN}"
+      - "traefik.http.routers.backend.tls.domains[0].sans=*.${HOST_DOMAIN}"
+    networks:
+      - diribitio
+    depends_on:
+      - database
+      - cache
+  frontend:
+    container_name: diribitio-vnint
+    build:
+      context: ./frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=HostRegexp(`${HOST_DOMAIN}`, `{subdomain:[a-z]+}.${HOST_DOMAIN}`)"
+      - "traefik.http.routers.frontend.entrypoints=frontend-secure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.routers.frontend.tls.domains[0].main=${HOST_DOMAIN}"
+      - "traefik.http.routers.frontend.tls.domains[0].sans=*.${HOST_DOMAIN}"
+    networks:
+      - diribitio
+    depends_on:
+      - backend
+
+volumes:
+  diribitio-database:
+  diribitio-cache:
+  diribitio-traefik:
+  
+networks:
+  diribitio:

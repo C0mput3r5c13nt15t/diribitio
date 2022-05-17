@@ -28,7 +28,7 @@ services:
       - "VULTR_HTTP_TIMEOUT=${VULTR_HTTP_TIMEOUT}"
       - "VULTR_PROPAGATION_TIMEOUT=${3600}"
     networks:
-      - diribitio
+      - diribitio-network
     ports:
       - "82:82"
       - "80:80"
@@ -48,7 +48,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     networks:
-      - diribitio
+      - diribitio-network
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.database.rule=HostSNI(`*`)"
@@ -62,7 +62,7 @@ services:
     volumes:
       - diribitio-cache:/data
     networks:
-      - diribitio
+      - diribitio-network
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.cache.rule=HostSNI(`*`)"
@@ -82,7 +82,7 @@ services:
     volumes:
       - diribitio-backend:/var/www/Inpriparo/storage
     networks:
-      - diribitio
+      - diribitio-network
     depends_on:
       - database
       - cache
@@ -99,7 +99,7 @@ services:
       - "traefik.http.routers.frontend.tls.domains[0].main=${HOST_DOMAIN}"
       - "traefik.http.routers.frontend.tls.domains[0].sans=*.${HOST_DOMAIN}"
     networks:
-      - diribitio
+      - diribitio-network
     depends_on:
       - backend
 
@@ -110,4 +110,4 @@ volumes:
   diribitio-backend:
   
 networks:
-  diribitio:
+  diribitio-network:

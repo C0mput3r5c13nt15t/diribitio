@@ -73,7 +73,7 @@ services:
       context: ./backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=HostRegexp(`${HOST_DOMAIN}`, `{subdomain:[a-z]+}.${HOST_DOMAIN}`) && PathPrefix(`/api/`)"
+      - "traefik.http.routers.backend.rule=HostRegexp(`${HOST_DOMAIN}`, `{subdomain:[a-z]+}.${HOST_DOMAIN}`) && (PathPrefix(`/api/`) || PathPrefix(`/storage/images/`)"
       - "traefik.http.routers.backend.entrypoints=frontend-secure"
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"

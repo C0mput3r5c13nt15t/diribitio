@@ -8,7 +8,8 @@
 ## Deploy Diribitio
 1. Copy the .env.example file to .env and modify it
 2. Copy the laravel.env.example file in the backend folder to laravel.env and modify it
-2. Run `DOCKER_HOST="ssh://user@ip" docker-compose up -d`
-3. Run `php artisan migrate --database=landlord --path=database/migrations/landlord/`
-4. Create a tenant with `php artisan tenant:create dev dev`
-5. Migrate the tenant and invite an admin (`tenant:create_admin`) 
+3. Run `DOCKER_HOST="ssh://user@ip" docker-compose up -d`
+4. Run `php artisan migrate --database=landlord --path=database/migrations/landlord/`
+5. Create a tenant with `php artisan tenant:create dev dev`
+6. Migrate the tenant and invite an admin (`tenant:create_admin`)
+7. Run `php artisan storage:link` in the project directory

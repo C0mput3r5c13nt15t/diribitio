@@ -79,6 +79,8 @@ services:
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
       - "traefik.http.routers.backend.tls.domains[0].main=${HOST_DOMAIN}"
       - "traefik.http.routers.backend.tls.domains[0].sans=*.${HOST_DOMAIN}"
+    volumes:
+      - diribitio-backend:/var/www/Inpriparo/storage
     networks:
       - diribitio
     depends_on:
@@ -105,6 +107,7 @@ volumes:
   diribitio-database:
   diribitio-cache:
   diribitio-traefik:
+  diribitio-backend:
   
 networks:
   diribitio:

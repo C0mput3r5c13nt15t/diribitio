@@ -1,4 +1,4 @@
-# Diribitio deployment (on a server running Ubuntu)
+# diribitio-deployment (on a server running Ubuntu)
 
 ## Prerequisites
 1. [Install Docker](https://docs.docker.com/engine/install/ubuntu/)
